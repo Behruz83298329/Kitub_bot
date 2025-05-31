@@ -43,8 +43,20 @@ def set_privacy(user_id, privacy_status):
 def search_books_by_author(author_name): 
     conn = sqlite3.connect("books.db") 
     cur = conn.cursor() 
-    cur.execute("SELECT file_name, book_name, author_name FROM books WHERE author_name LIKE ? AND private = 0", (f"%{author_name}%",)) 
+    cur.execute("SELECT file_name, book_name, author_name FROM books WHERE  author_name LIKE ? AND private = 0", (f"%{author_name}%",))
     results = cur.fetchall() 
+    # print(results)
+    conn.close() 
+    return results
+    
+def search_books_by_book_name(book_name): 
+    conn = sqlite3.connect("books.db") 
+    cur = conn.cursor() 
+    print("DB dagi funksiya")
+    cur.execute("SELECT file_name, book_name, author_name FROM books WHERE book_name LIKE ?  AND private = 0", (f"%{book_name}%",))
+    results = cur.fetchall()
+    print(results)
+
     conn.close() 
     return results
 

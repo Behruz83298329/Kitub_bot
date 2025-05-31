@@ -6,8 +6,8 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery
 from aiogram.dispatcher.filters.state import State, StatesGroup
 import os
-from buttons import menu, tahrir_menu, tasdiq_menu,cancel_search_button
-from database import init_db, save_book, get_user_books, set_privacy, search_books_by_author, update_book_name, update_book_author, delete_book_by_name
+from buttons import menu, tahrir_menu, tasdiq_menu,cancel_search_button,cancel_book_search_button
+from database import init_db, save_book, get_user_books, set_privacy, search_books_by_author ,search_books_by_book_name, update_book_name, update_book_author, delete_book_by_name
 
 API_TOKEN = "7569490442:AAGQjt43yD7NX2k3WG_oM2N7TC679mHmBFo"
 
@@ -28,6 +28,7 @@ class BookStates(StatesGroup):
     waiting_for_new_author_name = State()
     waiting_for_book_to_delete = State()
     waiting_for_delete_confirm = State()
+    waiting_for_search_by_book_name=State()
 
 @dp.message_handler(commands=["start"])
 async def start_handler(message: Message):
@@ -42,6 +43,8 @@ async def handle_document(message: Message, state: FSMContext):
     user_id = message.from_user.id
     document = message.document
     file_name = document.file_name
+    file_id = message.document.file_id
+    await message.answer_document(file_id)
 
     file_info = await bot.get_file(document.file_id)
     file_path = file_info.file_path
@@ -91,30 +94,58 @@ async def make_public(message: Message):
     set_privacy(message.from_user.id, 0)
     await message.answer("Maxfiylikdan chiqildi.")
 
-@dp.message_handler(text="Kitob izlash")
+@dp.message_handler(text="Kitob izlash muallif orqali")
 async def search_books(message: Message):
     await message.answer("Muallif ismini kiriting:")
     await BookStates.waiting_for_search_query.set()
-
 @dp.message_handler(state=BookStates.waiting_for_search_query)
 async def handle_search(message: Message, state: FSMContext):
 
  books = search_books_by_author(message.text)
  if not books:
-     await message.answer("Kitob topilmadi.",reply_markup=cancel_search_button)
+  await message.answer("Kitob topilmadi.",reply_markup=cancel_search_button)
  else: 
    for file_name, book_name,author_name in books:
     path = f"files/{file_name}"
     if os.path.exists(path):
         with open(path, 'rb') as doc:
-            await message.answer_document(doc, caption=f"Nomi: {book_name}\nMuallif: {author_name}")
+            await message.answer_document(doc, caption=f"Muallif: {author_name}\nNomi: {book_name}")
     else:
                 await message.answer(f"{book_name} — Fayl topilmadi")
     await state.finish()
 
- @dp.callback_query_handler(lambda c:
- c.data == 'cancel_search', state='*')
+ @dp.callback_query_handler(lambda c: c.data == 'cancel_search', state='*')
  async def cancel_search_handler (callback_query:types.CallbackQuery,state:FSMContext):
+  await state.finish()
+  await bot.send_message(callback_query.from_user.id,"Qidiruv bekor qilindi.",reply_markup=menu)
+
+@dp.message_handler(text="Kitob izlash nomi orqali")
+async def search_books(message: Message):
+    await message.answer("kitobni nomini kiriting:")
+    await BookStates.waiting_for_search_by_book_name.set()
+    print("SOrovdan oldingi sorov")
+@dp.message_handler(state=BookStates.waiting_for_search_by_book_name)
+async def handle_search(message: Message, state: FSMContext):
+    print("Bu yer ishlasa ")
+    books = search_books_by_book_name(message.text)
+    print(books)
+
+    if not books:
+        print("Bu yerda kitop topilmasa ishlaydi")
+        await message.answer("Kitob topilmadi.",reply_markup=cancel_search_button)
+    else: 
+        print(books)
+    for file_name, book_name,author_name in books:
+        path = f"files/{file_name}"
+        if os.path.exists(path):
+            with open(path, 'rb') as doc:
+                await message.answer_document(doc, caption=f"Muallif: {author_name}\nNomi: {book_name}")
+        else:
+            await message.answer(f"{book_name} — Fayl topilmadi")
+        await state.finish()
+
+@dp.callback_query_handler(lambda c: c.data == 'cancel_book_search', state='*')
+async def cancel_book_search_handler (callback_query:types.CallbackQuery,state:FSMContext):
   await state.finish()
   await bot.send_message(callback_query.from_user.id,"Qidiruv bekor qilindi.",reply_markup=menu)
 

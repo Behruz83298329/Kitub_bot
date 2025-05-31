@@ -6,7 +6,8 @@ menu.add(
     KeyboardButton("Kitoblarim")
 )
 menu.add(
-    KeyboardButton("Kitob izlash"),
+    KeyboardButton("Kitob izlash muallif orqali"),
+    KeyboardButton("Kitob izlash nomi orqali"),
     KeyboardButton("Maxfiylik"),
     KeyboardButton("Maxfiylikdan chiqish")
 )
@@ -30,4 +31,8 @@ tasdiq_menu.add(
 cancel_search_button = InlineKeyboardMarkup(row_width=1)
 cancel_search_button.add(InlineKeyboardButton("Qidiruvni bekor qilish",
 callback_data="cancel_search")
+)
+cancel_book_search_button=InlineKeyboardMarkup(row_width=1)
+cancel_book_search_button=InlineKeyboardButton("Qidiruv bekor qilish",
+callback_data=("cancel_book_search")
 )
